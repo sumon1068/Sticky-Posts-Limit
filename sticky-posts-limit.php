@@ -20,15 +20,23 @@ if (!defined('ABSPATH')) {
  * Trims the sticky_posts option down to the latest N entries.
  */
 function wppspl_enforce_sticky_limit() {
-    $limit = (int) get_option('wppspl_sticky_limit', 1);
+    $raw_limit = get_option('wppspl_sticky_limit', '');
+
+    // ✅ Do nothing if the setting hasn't been configured yet.
+    if ($raw_limit === '' || $raw_limit === false) {
+        return;
+    }
+
+    $limit = (int) $raw_limit;
+
+    if ($limit < 1) {
+        return;
+    }
+
     $sticky_posts = get_option('sticky_posts', []);
 
     if (!is_array($sticky_posts) || empty($sticky_posts)) {
         return;
-    }
-
-    if ($limit < 1) {
-        $limit = 1;
     }
 
     if (count($sticky_posts) <= $limit) {
@@ -51,7 +59,6 @@ add_action('updated_option', function ($option, $old_value, $value) {
 
 /**
  * Enforce on the very first save of the setting (option didn't exist yet).
- * updated_option does NOT fire for brand-new options, so we need this too.
  */
 add_action('added_option', function ($option, $value) {
     if ($option === 'wppspl_sticky_limit') {
@@ -61,8 +68,6 @@ add_action('added_option', function ($option, $value) {
 
 /**
  * Enforce whenever any post is stickied.
- * post_stuck was introduced in WordPress 5.7.
- * Without this hook, adding a new sticky post never triggers enforcement.
  */
 add_action('post_stuck', function ($post_id) {
     wppspl_enforce_sticky_limit();
@@ -104,9 +109,16 @@ function wppspl_render_settings_page() {
  */
 add_action('admin_init', function () {
     register_setting('wppspl_sticky_group', 'wppspl_sticky_limit', [
-        'type'              => 'integer',
-        'sanitize_callback' => 'absint',
-        'default'           => 1,
+        'type'              => 'string',
+        'sanitize_callback' => function ($value) {
+            // ✅ Allow saving an empty value (means "no limit enforced").
+            if ($value === '' || $value === null) {
+                return '';
+            }
+            $int = absint($value);
+            return $int >= 1 ? (string) $int : '';
+        },
+        'default'           => '',
     ]);
 
     add_settings_section(
@@ -122,9 +134,9 @@ add_action('admin_init', function () {
         'wppspl_sticky_limit',
         'Number of Sticky Posts',
         function () {
-            $value = get_option('wppspl_sticky_limit', 1);
-            echo '<input type="number" name="wppspl_sticky_limit" value="' . esc_attr($value) . '" min="1" />';
-            echo '<p class="description">Only the latest N sticky posts will remain. Any extras are automatically un-stickied.</p>';
+            $value = get_option('wppspl_sticky_limit', '');
+            echo '<input type="number" name="wppspl_sticky_limit" value="' . esc_attr($value) . '" min="1" placeholder="No limit" />';
+            echo '<p class="description">Enter a number to limit sticky posts to the latest N. Leave blank to disable enforcement.</p>';
         },
         'wppspl-sticky-settings',
         'wppspl_sticky_section'
@@ -133,7 +145,6 @@ add_action('admin_init', function () {
 
 /**
  * Activation hook — set a transient so we can redirect after activation.
- * Enforcement is intentionally NOT run here; the option may not exist yet.
  */
 register_activation_hook(__FILE__, function () {
     set_transient('wppspl_do_activation_redirect', true, 30);
