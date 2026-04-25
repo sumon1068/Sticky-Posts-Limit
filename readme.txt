@@ -26,8 +26,6 @@ This ensures your homepage always stays clean, focused, and easy to manage.
 
 Perfect for blogs, news sites, and magazine-style layouts where controlling featured content is important.
 
-**Important Notice:** If your site already has more sticky posts than your defined limit, they will remain unchanged until you save the settings or update sticky posts. After that, the plugin will automatically enforce the limit.
-
 == Features ==
 
 - Set your own limit for sticky posts (e.g., 1, 3, 5)
