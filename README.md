@@ -1,7 +1,7 @@
 # Sticky Posts Limit
 
-A WordPress plugin that limits the number of sticky posts automatically.<br>
-Developed by [WP Passion](https://wppassion.com)
+A WordPress plugin that limits the number of sticky posts automatically.
+
 
 ## Features
 - Set sticky post limit
@@ -19,3 +19,6 @@ Upload the ZIP via Plugins → Add New → Upload Plugin, then activate.
 
 ## Documentation
 See full guide: https://wppassion.com/plugins/sticky-posts-limit/
+
+## Author
+Developed by [WP Passion](https://wppassion.com)
